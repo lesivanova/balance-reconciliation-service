@@ -1,0 +1,122 @@
+import streamlit as st
+import requestimport pandas as pdimport os
+
+API_URL = os.environ.get('API_URL', 'http://localhost:8000')
+
+st.set_page_config(page_title="Balance Reconciliation", page_icon="⚖️", layout="wide")
+
+st.title("⚖️ Сведение материального баланса")
+
+with st.sidebar:
+    st.header("Настройки")
+    st.markdown(f"**API URL:** `{API_URL}`")
+    st.markdown("---")
+    st.markdown("### Инструкция")
+
+tab1, tab2 = st.tabs(["Примеры", "Результаты"])
+
+with tab1:
+    st.header("Готовые примеры")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("Пример 1: Оригинальная схема"):
+            st.session_state['request_data'] = {
+                "flows": [
+                    {"id": "X1", "name": "Входной поток", "measured_value": 10.005, "tolerance": 0.200},
+                    {"id": "X2", "name": "Поток 2", "measured_value": 3.033, "tolerance": 0.121},
+                    {"id": "X3", "name": "Поток 3", "measured_value": 6.831, "tolerance": 0.683},
+                    {"id": "X4", "name": "Поток 4", "measured_value": 1.985, "tolerance": 0.040},
+                    {"id": "X5", "name": "Поток 5", "measured_value": 5.093, "tolerance": 0.102},
+                    {"id": "X6", "name": "Поток 6", "measured_value": 4.057, "tolerance": 0.081},
+                    {"id": "X7", "name": "Поток 7", "measured_value": 0.991, "tolerance": 0.020}
+                ],
+                "nodes": [
+                    {"id": "N1", "name": "Узел 1", "equations": [
+                        {"flow_id": "X1", "sign": 1}, {"flow_id": "X2", "sign": -1}, {"flow_id": "X3", "sign": -1}]},
+                    {"id": "N2", "name": "Узел 2", "equations": [
+                        {"flow_id": "X3", "sign": 1}, {"flow_id": "X4", "sign": -1}, {"flow_id": "X5", "sign": -1}]},
+                    {"id": "N3", "name": "Узел 3", "equations": [
+                        {"flow_id": "X5", "sign": 1}, {"flow_id": "X6", "sign": -1}, {"flow_id": "X7", "sign": -1}]}
+                ]
+            }
+            st.success("Пример 1 загружен!")
+    
+    with col2:
+        if st.button("Пример 2: Вариант V2"):
+            st.session_state['request_data'] = {
+                "flows": [
+                    {"id": "X1", "name": "Входной поток", "measured_value": 10.005, "tolerance": 0.200},
+                    {"id": "X2", "name": "Поток 2", "measured_value": 3.033, "tolerance": 0.121},
+                    {"id": "X3", "name": "Поток 3", "measured_value": 6.831, "tolerance": 0.683},
+                    {"id": "X4", "name": "Поток 4", "measured_value": 1.985, "tolerance": 0.040},
+                    {"id": "X5", "name": "Поток 5", "measured_value": 5.093, "tolerance": 0.102},
+                    {"id": "X6", "name": "Поток 6", "measured_value": 4.057, "tolerance": 0.081},
+                    {"id": "X7", "name": "Поток 7", "measured_value": 0.991, "tolerance": 0.020},
+                    {"id": "X8", "name": "Поток 8", "measured_value": 6.666, "tolerance": 0.667}
+                ],
+                "nodes": [
+                    {"id": "N1", "name": "Узел 1", "equations": [
+                        {"flow_id": "X1", "sign": 1}, {"flow_id": "X2", "sign": -1}, {"flow_id": "X3", "sign": -1}]},
+                    {"id": "N2", "name": "Узел 2", "equations": [
+                        {"flow_id": "X3", "sign": 1}, {"flow_id": "X4", "sign": -1}, {"flow_id": "X5", "sign": -1}]},
+                    {"id": "N3", "name": "Узел 3", "equations": [
+                        {"flow_id": "X5", "sign": 1}, {"flow_id": "X6", "sign": -1},
+                        {"flow_id": "X7", "sign": -1}, {"flow_id": "X8", "sign": -1}]}
+                ]
+            }
+            st.success("Пример 2 загружен!")
+    
+    with col3:
+        if st.button("Пример 3: V2 + X1=10*X2"):
+            st.session_state['request_data'] = {
+                "flows": [
+                    {"id": "X1", "name": "Входной поток", "measured_value": 10.005, "tolerance": 0.200},
+                    {"id": "X2", "name": "Поток 2", "measured_value": 3.033, "tolerance": 0.121},
+                    {"id": "X3", "name": "Поток 3", "measured_value": 6.831, "tolerance": 0.683},
+                    {"id": "X4", "name": "Поток 4", "measured_value": 1.985, "tolerance": 0.040},
+                    {"id": "X5", "name": "Поток 5", "measured_value": 5.093, "tolerance": 0.102},
+                    {"id": "X6", "name": "Поток 6", "measured_value": 4.057, "tolerance": 0.081},
+                    {"id": "X7", "name": "Поток 7", "measured_value": 0.991, "tolerance": 0.020},
+                    {"id": "X8", "name": "Поток 8", "measured_value": 6.666, "tolerance": 0.667}
+                ],
+                "nodes": [
+                    {"id": "N1", "name": "Узел 1", "equations": [
+                        {"flow_id": "X1", "sign": 1}, {"flow_id": "X2", "sign": -1}, {"flow_id": "X3", "sign": -1}]},
+                    {"id": "N2", "name": "Узел 2", "equations": [
+                        {"flow_id": "X3", "sign": 1}, {"flow_id": "X4", "sign": -1}, {"flow_id": "X5", "sign": -1}]},
+                    {"id": "N3", "name": "Узел 3", "equations": [
+                        {"flow_id": "X5", "sign": 1}, {"flow_id": "X6", "sign": -1},
+                        {"flow_id": "X7", "sign": -1}, {"flow_id": "X8", "sign": -1}]}
+                ],
+                "constraints": [
+                    {"terms": [{"flow_id": "X1", "coefficient": 1}, {"flow_id": "X2", "coefficient": -10}], "rhs": 0}
+                ]
+            }
+            st.success("Пример 3 загружен!")
+    
+    if st.button("Рассчитать баланс", type="primary"):
+        if 'request_data' in st.session_state:
+            with st.spinner("Вычисление..."):
+                try:
+                    response = requests.post(f"{API_URL}/api/v1/reconcile", json=st.session_state['request_data'])
+                    if response.status_code == 200:
+                        st.session_state['result'] = response.json()
+                        st.success("Баланс рассчитан! Перейдите на вкладку 'Результаты'")
+                    else:
+                        st.error(f"Ошибка: {response.text}")
+                except Exception as e:
+                    st.error(f"Не удалось подключиться к серверу: {e}")
+        else:
+            st.warning("Сначала выберите пример")
+
+with tab2:
+    st.header("Результаты расчета")
+    if 'result' in st.session_state:
+        result = st.session_state['result']
+        if result["status"] == "success":
+            df = pd.DataFrame(result['balanced_flows'])
+            st.dataframe(df)
+        else:
+            st.error(f"Ошибка: {result.get('message', 'Неизвестная ошибка')}")
