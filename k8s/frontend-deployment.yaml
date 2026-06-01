@@ -15,9 +15,11 @@ spec:
       containers:
       - name: frontend
         image: frontend:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8501
         env:
         - name: API_URL
           value: "http://backend-service:8000"
+        - name: DATABASE_SERVICE_URL
+          value: "http://database-service:8001"

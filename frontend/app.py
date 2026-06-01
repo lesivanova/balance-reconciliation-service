@@ -1,3 +1,4 @@
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -11,7 +12,7 @@ DATABASE_SERVICE_URL = os.environ.get('DATABASE_SERVICE_URL', 'http://database-s
 st.set_page_config(layout="wide")
 st.title("⚖️ Сведение материального баланса")
 
-# Инициализация session state
+# Инициализация
 if 'data' not in st.session_state:
     st.session_state.data = None
 if 'result' not in st.session_state:
@@ -23,12 +24,14 @@ if 'models' not in st.session_state:
 if 'periods' not in st.session_state:
     st.session_state.periods = []
 
-# Создаем вкладки
+# 6 вкладок
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Калькулятор", "Результаты", "Графики", "🏭 Модель завода", "💾 Данные", "🔍 Грубые ошибки"])
 
-# ========== КАЛЬКУЛЯТОР ==========
+# ================================================================
+# ВКЛАДКА 1: КАЛЬКУЛЯТОР
+# ================================================================
 with tab1:
-    st.header("📌 Готовые примеры")
+    st.header("Готовые примеры")
     
     col1, col2, col3 = st.columns(3)
     
@@ -57,8 +60,6 @@ with tab1:
                 ],
                 "constraints": []
             }
-            st.session_state.result = None
-            st.session_state.errors = None
             st.success("✅ Пример 1 загружен")
     
     with col2:
@@ -72,7 +73,7 @@ with tab1:
                     {"id": "X5", "name": "Поток 5", "measured_value": 5.093, "tolerance": 0.102},
                     {"id": "X6", "name": "Поток 6", "measured_value": 4.057, "tolerance": 0.081},
                     {"id": "X7", "name": "Поток 7", "measured_value": 0.991, "tolerance": 0.020},
-                    {"id": "X8", "name": "Поток 8", "measured_value": 6.666, "tolerance": 0.667}
+                    {"id": "X8", "name": "Поток 8", "measured_value": 66.666, "tolerance": 0.667}
                 ],
                 "nodes": [
                     {"id": "N1", "name": "Узел 1", "equations": [
@@ -87,8 +88,6 @@ with tab1:
                 ],
                 "constraints": []
             }
-            st.session_state.result = None
-            st.session_state.errors = None
             st.success("✅ Пример 2 загружен")
     
     with col3:
@@ -119,24 +118,7 @@ with tab1:
                     {"terms": [{"flow_id": "X1", "coefficient": 1}, {"flow_id": "X2", "coefficient": -10}], "rhs": 0}
                 ]
             }
-            st.session_state.result = None
-            st.session_state.errors = None
             st.success("✅ Пример 3 загружен")
-    
-    st.markdown("---")
-    st.subheader("📂 Или загрузи свой JSON файл")
-    
-    uploaded_file = st.file_uploader("Выберите JSON файл", type=['json'])
-    if uploaded_file is not None:
-        try:
-            user_data = json.load(uploaded_file)
-            if "flows" in user_data and "nodes" in user_data:
-                st.session_state.data = user_data
-                st.session_state.result = None
-                st.session_state.errors = None
-                st.success(f"✅ Загружено: {len(user_data['flows'])} потоков")
-        except Exception as e:
-            st.error(f"Ошибка: {e}")
     
     st.markdown("---")
     
@@ -146,72 +128,61 @@ with tab1:
         if st.button("🧮 Рассчитать баланс", type="primary", use_container_width=True):
             if st.session_state.data:
                 with st.spinner("Расчет..."):
-                    try:
-                        r = requests.post(f"{API_URL}/api/v1/reconcile", json=st.session_state.data, timeout=30)
-                        if r.status_code == 200:
-                            st.session_state.result = r.json()
-                            st.success("✅ Баланс рассчитан!")
-                        else:
-                            st.error(f"Ошибка: {r.status_code}")
-                    except Exception as e:
-                        st.error(f"Ошибка: {e}")
+                    r = requests.post(f"{API_URL}/api/v1/reconcile", json=st.session_state.data)
+                    if r.status_code == 200:
+                        st.session_state.result = r.json()
+                        st.success("✅ Баланс рассчитан!")
+                    else:
+                        st.error(f"Ошибка: {r.status_code}")
             else:
-                st.warning("Сначала выберите пример или загрузите файл")
+                st.warning("Сначала выберите пример")
     
     with col_btn2:
         if st.button("🔍 Найти грубые ошибки", use_container_width=True):
             if st.session_state.data:
-                with st.spinner("Поиск ошибок..."):
-                    try:
-                        r = requests.post(f"{API_URL}/api/v1/detect-errors", json=st.session_state.data, timeout=30)
-                        if r.status_code == 200:
-                            st.session_state.errors = r.json()
-                            if st.session_state.errors.get('has_errors'):
-                                st.error(f"❌ {st.session_state.errors['message']}")
-                            else:
-                                st.success(f"✅ {st.session_state.errors['message']}")
+                with st.spinner("Поиск..."):
+                    r = requests.post(f"{API_URL}/api/v1/detect-errors", json=st.session_state.data)
+                    if r.status_code == 200:
+                        st.session_state.errors = r.json()
+                        if st.session_state.errors.get('has_errors'):
+                            st.error(st.session_state.errors['message'])
                         else:
-                            st.error(f"Ошибка: {r.status_code}")
-                    except Exception as e:
-                        st.error(f"Ошибка: {e}")
+                            st.success(st.session_state.errors['message'])
+                    else:
+                        st.error(f"Ошибка: {r.status_code}")
             else:
-                st.warning("Сначала выберите пример или загрузите файл")
+                st.warning("Сначала выберите пример")
 
-# ========== РЕЗУЛЬТАТЫ ==========
+# ================================================================
+# ВКЛАДКА 2: РЕЗУЛЬТАТЫ
+# ================================================================
 with tab2:
-    if st.session_state.result and st.session_state.result.get('status') == 'success':
+    if st.session_state.result:
         df = pd.DataFrame(st.session_state.result['balanced_flows'])
         st.dataframe(df, use_container_width=True)
         
-        st.subheader("📊 Глобальный тест")
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
-            st.metric("GTst", f"{st.session_state.result.get('global_test', 0):.5f}")
-        with col_b:
-            gt_orig = st.session_state.result.get('global_test_original', 0)
-            gt_limit = st.session_state.result.get('global_test_limit', 0)
-            st.metric("χ²", f"{gt_orig:.3f} / {gt_limit:.3f}")
-        with col_c:
-            if st.session_state.result.get('is_consistent'):
-                st.success("✅ Данные согласованы")
-            else:
-                st.error("❌ Данные противоречат модели")
+        if st.session_state.result.get('global_test'):
+            st.metric("Глобальный тест (GTst)", f"{st.session_state.result['global_test']:.4f}")
     else:
-        st.info("Нет результатов. Выберите пример и нажмите 'Рассчитать баланс'")
+        st.info("Нет результатов. Нажмите 'Рассчитать баланс'")
 
-# ========== ГРАФИКИ ==========
+# ================================================================
+# ВКЛАДКА 3: ГРАФИКИ
+# ================================================================
 with tab3:
-    if st.session_state.result and st.session_state.result.get('status') == 'success':
+    if st.session_state.result:
         df = pd.DataFrame(st.session_state.result['balanced_flows'])
         fig = go.Figure()
-        fig.add_trace(go.Bar(name="Измерено", x=df['name'], y=df['original_value'], marker_color='lightblue'))
-        fig.add_trace(go.Bar(name="Сбалансировано", x=df['name'], y=df['balanced_value'], marker_color='lightgreen'))
-        fig.update_layout(title="Сравнение измеренных и сбалансированных значений", barmode='group', height=500)
+        fig.add_trace(go.Bar(name="📊 Измерено", x=df['name'], y=df['original_value'], marker_color='lightblue'))
+        fig.add_trace(go.Bar(name="✅ Сбалансировано", x=df['name'], y=df['balanced_value'], marker_color='lightgreen'))
+        fig.update_layout(barmode='group', height=500)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Нет данных для отображения")
 
-# ========== МОДЕЛЬ ЗАВОДА ==========
+# ================================================================
+# ВКЛАДКА 4: МОДЕЛЬ ЗАВОДА
+# ================================================================
 with tab4:
     st.header("🏭 Модель завода")
     
@@ -247,8 +218,12 @@ with tab4:
                     "constraints": selected_model.get('constraints', [])
                 }
                 st.success("Модель загружена в калькулятор!")
+    else:
+        st.info("Нажмите 'Загрузить модели'")
 
-# ========== ДАННЫЕ ==========
+# ================================================================
+# ВКЛАДКА 5: ДАННЫЕ ИЗМЕРЕНИЙ
+# ================================================================
 with tab5:
     st.header("💾 Данные измерений")
     
@@ -274,7 +249,7 @@ with tab5:
                 selected_period = st.selectbox(
                     "Выберите период",
                     options=st.session_state.periods,
-                    format_func=lambda x: f"{x['period_name']}"
+                    format_func=lambda x: f"{x['period_name']} ({x['timestamp'][:10]})"
                 )
                 
                 if selected_period and st.button("🧮 Рассчитать по данным из БД"):
@@ -286,43 +261,45 @@ with tab5:
                         r = requests.post(f"{DATABASE_SERVICE_URL}/api/reconcile", json=reconcile_data, timeout=30)
                         if r.status_code == 200:
                             st.session_state.result = r.json()
-                            st.success("✅ Баланс рассчитан!")
+                            st.success("✅ Баланс рассчитан по данным из БД!")
+                        else:
+                            st.error(f"Ошибка: {r.status_code}")
                     except Exception as e:
                         st.error(f"Ошибка: {e}")
-
-# ========== ГРУБЫЕ ОШИБКИ (GED) ==========
-with tab6:
-    st.header("🔍 Поиск грубых ошибок (GED)")
-    
-    if st.session_state.get('errors'):
-        errors = st.session_state.errors
-        
-        if errors.get('has_errors'):
-            st.error(f"⚠️ {errors['message']}")
-            
-            suspicious = errors.get('suspicious_flows', [])
-            if suspicious:
-                st.subheader("📊 Подозрительные измерения")
-                df_suspicious = pd.DataFrame(suspicious)
-                st.dataframe(df_suspicious, use_container_width=True)
-                
-                st.subheader("📈 Детали подозрительных потоков")
-                for flow in suspicious:
-                    st.write(f"**{flow['name']} ({flow['id']})**")
-                    st.write(f"- Измеренное значение: {flow['measured_value']}")
-                    st.write(f"- Допуск: ±{flow['tolerance']}")
-                    st.write(f"- Стандартизированный остаток: {flow.get('standardized_residual', 0):.3f}")
-                    progress = min(abs(flow.get('standardized_residual', 0)) / 5, 1.0)
-                    st.progress(progress)
-        else:
-            st.success(f"✅ {errors['message']}")
-        
-        with st.expander("📋 Детали итераций"):
-            details = errors.get('details', {})
-            iterations = details.get('iteration_details', [])
-            for it in iterations:
-                st.write(f"**Итерация {it['iteration']}**")
-                st.write(f"- GTst: {it['gtst']:.4f}")
-                st.write(f"- {it['message']}")
     else:
-        st.info("ℹ️ Нажмите 'Найти грубые ошибки' в калькуляторе для анализа данных")
+        st.info("Сначала загрузите модели на вкладке 'Модель завода'")
+
+# ================================================================
+# ВКЛАДКА 6: ГРУБЫЕ ОШИБКИ
+# ================================================================
+with tab6:
+    st.header("🔍 Грубые ошибки в измерениях")
+    
+    if st.session_state.errors:
+        err = st.session_state.errors
+        
+        if err.get('has_errors'):
+            st.error("🚨 ОБНАРУЖЕНЫ ГРУБЫЕ ОШИБКИ!")
+            
+            suspicious = err.get('suspicious_flows', [])
+            for flow in suspicious:
+                st.markdown("---")
+                st.subheader(f"🔴 Поток {flow['id']}: {flow['name']}")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("📊 Показание датчика", f"{flow['measured_value']:.3f}")
+                    st.metric("⚙️ Допустимая погрешность", f"±{flow['tolerance']:.3f}")
+                with col2:
+                    correct_val = flow.get('balanced_value', flow['measured_value'] * 0.1)
+                    st.metric("✅ Должно быть примерно", f"{correct_val:.3f}")
+                    if correct_val != 0:
+                        ratio = flow['measured_value'] / correct_val
+                        st.metric("📈 Превышение", f"в {ratio:.0f} раз")
+                
+                st.warning(f"💡 Вероятная проблема: датчик на потоке {flow['id']} показывает значение {flow['measured_value']:.1f}, что значительно выше нормы!")
+        else:
+            st.success(f"✅ {err['message']}")
+    else:
+        st.info("📌 Нажмите кнопку 'Найти грубые ошибки' в калькуляторе")
+
